@@ -1,40 +1,120 @@
-/*
- * @Author       : frank
- * @Date         : 2022-08-27 10:11:39
- * @LastEditTime : 2022-08-27 11:58:31
- * @LastEditors  : frank
- * @Description  : In User Settings Edit
- */
-var https = require("https");        //网络请求
+#!/usr/bin/env node
+const fs = require("fs");            //操作文件，读写文件
+const path = require('path');
+const https = require("https");        //网络请求
+const cheerio = require("cheerio");  //扩展模块
+const { fsExistsSync, getSuffix, copyWithStream, printHelp, readDir, outputHtml } = require('./util');
 
-var fs = require("fs");            //操作文件，读写文件
+const pwd = process.cwd(); // 当前执行程序的路径 同 path.resolve('./')
+const currentDir = pwd.substr(pwd.lastIndexOf('/') + 1);  // 当前执行程序所在的文件名
+const pwd_ = path.resolve(pwd, '..'); // 当前执行程序的路径的上一级路径
+const mode = process.argv[2]; // 命令 tit_check
+const targetPath = process.argv[3] || path.join(pwd_, `${currentDir}_`); // 目标存放目录(用户数据 或 默认当前执行程序的路径的上一级路径+当前文件夹名+_)
 
-var cheerio = require("cheerio");  //扩展模块
+if (mode !== 'start') {
+  return
+} else {
+  printHelp()
+}
 
-const text = '狄仁杰之浴火麒麟:【预告】大唐奇案疑云诡异,来和狄公一起破案';
-const wz = `https://cn.bing.com/search?q=${text}&PC=U316&FORM=CHROMN`; //网址
+let titleList = [];
 
-var strHtml = "";
-var results = [];
-https.get(wz, function (res) {
-  res.on("data", function (chunk) {
-    strHtml += chunk;
-  })
-  res.on("end", function () {
-
-    // console.log(strHtml);
-
-    var $ = cheerio.load(strHtml);
-
-    $("#b_results li .b_title").each((iten, i) => {
-      const str = $(i).text().split(' ...')[0];
-      console.log(str, `      ========>相似度：${similar(text, str)}`);
-      // console.log('----------------------------------------------------------------------------')
-      // results.push($(i).text())
-      // console.log(results.toString())
-    })
+const getTitle = (src) => {
+  const files = readDir(src);  //读取源目录下的所有文件及文件夹
+  files.forEach((file) => {
+    const _src = path.join(src, file);
+    if (fsExistsSync(_src)) {
+      const stats = fs.statSync(_src);
+      if (stats.isFile()) { //如果是个文件则拷贝
+        const suffix = getSuffix(file);
+        if (suffix === '.mp4') {
+          titleList.push({
+            title: path.basename(file, '.mp4'),
+            path: _src
+          })
+        }
+      } else if (stats.isDirectory()) { //是目录则 递归
+        getTitle(_src);
+      }
+    } else {
+      console.log(`处理 ${_src} 失败，请确认文件是否存在`);
+    }
   });
-})
+}
+getTitle(pwd)
+
+if (titleList.length === 0) {
+  return;
+}
+let count = 0;
+const results = [];
+// {
+//     title: path.basename(file, '.mp4'),
+//     path: _src
+//     similarList: similarList
+// }
+const errorList = [];
+
+const next = () => {
+  if (count < titleList.length - 1) {
+    count++
+    checkTitle(count)
+  } else {
+    if (errorList.length) {
+      console.log('错误列表：', errorList)
+      titleList = errorList;
+      count = 0;
+      checkTitle(count)
+    } else {
+      outputHtml(results)
+    }
+  }
+}
+const checkTitle = (index) => {
+  const item = titleList[index];
+  const text = item.title;
+  const wz = `https://cn.bing.com/search?q=${text}&PC=U316&FORM=CHROMN`; //网址
+  let strHtml = "";
+  console.log(`-------------- 正在比对第 ${index + 1} / ${titleList.length} 条：${text} 【比对结果】--------------`)
+  https.get(wz, function (res) {
+    res.on("data", function (chunk) {
+      strHtml += chunk;
+    })
+    res.on("end", function () {
+      const $ = cheerio.load(strHtml);
+      const similarList = [];
+
+      $("#b_results li.b_algo .b_title").each((iten, i) => {
+        const str = $(i).text().split(' ...')[0];
+        const similarVal = similar(text, str);
+        console.log(str, `      ========>相似度：${similarVal}`);
+        if (similarVal > 60) {
+          similarList.push({
+            similarTitle: str,
+            svalue: similarVal,
+            slink: $($(i).find('a.sh_favicon')[0]).attr('href')
+          })
+        }
+      })
+      if (similarList.length) {
+        results.push({
+          ...item,
+          similarList: similarList
+        })
+      }
+      console.log('-----------------------------------------------------------------------------------')
+      console.log(' ')
+      next()
+    });
+  }).on('error', (err) => {
+    console.log('error ===================>', err)
+    errorList.push(item);
+    next()
+  });
+}
+
+checkTitle(count)
+
 
 /**
  * 相似度对比

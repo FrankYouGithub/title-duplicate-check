@@ -1,8 +1,11 @@
 {
-  "name": "search",
+  "name": "title_duplicate_check",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
+  "bin": {
+    "check": "./app.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
