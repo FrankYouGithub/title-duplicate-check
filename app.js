@@ -53,7 +53,7 @@ const results = [];
 //     path: _src
 //     similarList: similarList
 // }
-const errorList = [];
+let errorList = [];
 
 const next = () => {
   if (count < titleList.length - 1) {
@@ -63,6 +63,7 @@ const next = () => {
     if (errorList.length) {
       console.log('错误列表：', errorList)
       titleList = errorList;
+      errorList = [];
       count = 0;
       checkTitle(count)
     } else {
