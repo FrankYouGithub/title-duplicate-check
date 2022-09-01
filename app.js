@@ -3,6 +3,7 @@ const fs = require("fs");            //操作文件，读写文件
 const path = require('path');
 const https = require("https");        //网络请求
 const cheerio = require("cheerio");  //扩展模块
+const axios = require('axios')
 const { fsExistsSync, getSuffix, copyWithStream, printHelp, readDir, outputHtml } = require('./util');
 
 const pwd = process.cwd(); // 当前执行程序的路径 同 path.resolve('./')
@@ -11,10 +12,8 @@ const pwd_ = path.resolve(pwd, '..'); // 当前执行程序的路径的上一级
 const mode = process.argv[2]; // 命令 tit_check
 const targetPath = process.argv[3] || path.join(pwd_, `${currentDir}_`); // 目标存放目录(用户数据 或 默认当前执行程序的路径的上一级路径+当前文件夹名+_)
 
-if (mode !== 'start') {
+if (!mode) {
   return
-} else {
-  printHelp()
 }
 
 let titleList = [];
@@ -58,20 +57,21 @@ let errorList = [];
 const next = () => {
   if (count < titleList.length - 1) {
     count++
-    checkTitle(count)
+    checkBing(count)
   } else {
     if (errorList.length) {
       console.log('错误列表：', errorList)
       titleList = errorList;
       errorList = [];
       count = 0;
-      checkTitle(count)
+      checkBing(count)
     } else {
-      outputHtml(results)
+      outputHtml(results, '必应查重结果')
     }
   }
 }
-const checkTitle = (index) => {
+
+const checkBing = (index) => {
   const item = titleList[index];
   const text = item.title;
   const wz = `https://cn.bing.com/search?q=${text}&PC=U316&FORM=CHROMN`; //网址
@@ -114,7 +114,84 @@ const checkTitle = (index) => {
   });
 }
 
-checkTitle(count)
+const nextXiaozu = () => {
+  if (count < titleList.length - 1) {
+    count++
+    checkXiaozhu(count)
+  } else {
+    if (errorList.length) {
+      console.log('错误列表：', errorList)
+      titleList = errorList;
+      errorList = [];
+      count = 0;
+      checkXiaozhu(count)
+    } else {
+      outputHtml(results, '小猪APP查重结果')
+    }
+  }
+}
+const checkXiaozhu = (index) => {
+  const item = titleList[index];
+  const text = item.title;
+  const wz = `https://app.xiaozhuyouban.com/video?signature=ZTRjN2FhMWNmYmNiZTU5YjQ1NGUzNmIzN2I4MTc0NjQ2NTNlMDhhYWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NjIwMjY0NzU3OTA==&timestamp=${new Date().getTime()}&channel=android-2 HTTP/1.1`; //网址
+  console.log(`-------------- 正在比对第 ${index + 1} / ${titleList.length} 条：${text} 【比对结果】--------------`)
+
+  axios.post(wz, {
+    keyword: text,
+    page: 1,
+    device_code: '653e08aac4410285a6e762f660667fad'
+  }, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }).then(res => {
+    console.log(`状态码: ${res.status}`)
+    if (res.status === 200) {
+      const list = res.data.data;
+      if (list.length) {
+        const similarList = [];
+        list.forEach(val => {
+          const similarVal = similar(text, val.title);
+          console.log(val.title, `      ========>相似度：${similarVal}`);
+          if (similarVal > 60) {
+            similarList.push({
+              similarTitle: val.title,
+              svalue: similarVal,
+              slink: val.url
+            })
+          }
+        })
+        if (similarList.length) {
+          results.push({
+            ...item,
+            similarList: similarList
+          })
+        }
+        console.log('-----------------------------------------------------------------------------------')
+        console.log(' ')
+        nextXiaozu()
+      }
+    }
+  }).catch(error => {
+    console.log('error ===================>', error)
+    errorList.push(item);
+    nextXiaozu()
+  })
+}
+
+switch (mode) {
+  case 'bing':
+    console.log('开始通过bing查重......')
+    checkBing(count)
+    break;
+  case 'xiaozhu':
+    console.log('开始通过小猪APP搜索查重......')
+    checkXiaozhu(count)
+    break;
+  default:
+    printHelp()
+    break;
+}
 
 
 /**

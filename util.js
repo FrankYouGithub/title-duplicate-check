@@ -1,7 +1,7 @@
 /*
  * @Author       : frank
  * @Date         : 2022-08-28 21:03:36
- * @LastEditTime : 2022-08-29 00:19:11
+ * @LastEditTime : 2022-09-01 22:39:37
  * @LastEditors  : frank
  * @Description  : In User Settings Edit
  */
@@ -41,14 +41,12 @@ const copyWithStream = (_src, _dst) => {
 }
 
 const printHelp = () => {
-  console.log('Usage: converter <command> <targetPath>');
+  console.log('Usage: check <command>');
   console.log('')
-  console.log(`where <command> is one of: "wx2qq", "qq2wx", "help"`);
+  console.log(`where <command> is one of: "bing", "xiaozhu", "help"`);
   console.log('')
-  console.log(`targetPath 为目标目录，最终处理完后存储的目录，不传的话默认会创建一个与当前执行命令所在目录同级的文件夹（文件夹名为：当前文件夹名_）`);
-  console.log('')
-  console.log('converter wx2qq            微信小程序转QQ小程序')
-  console.log('converter qq2wx            QQ小程序转微信小程序')
+  console.log('converter bing            通过bing查重')
+  console.log('converter xiaozhu            通过小猪APP搜索查重')
 }
 
 const ignoreFiles = ['.git'];
@@ -60,16 +58,16 @@ function readDir(src) {
   return files
 }
 
-const outputHtml = (list) => {
+const outputHtml = (list, title = '查重结果') => {
   let liStr = '';
-  list.forEach(item => {
+  list.forEach((item, index) => {
     let aStr = '';
     item.similarList.map(similar => {
       aStr += `<a href="${similar.slink}" target="_blank"><p>${similar.similarTitle} (相似度：${similar.svalue})</p></a>`
     })
     liStr += `<li class="content">
       <div class="stext">
-        <p>${item.title}</p>
+        <p>${index + 1}. ${item.title}</p>
         <p>路径: ${item.path}</p>
       </div>
       <div class="slink">
@@ -135,7 +133,7 @@ const outputHtml = (list) => {
     </ul>
   </body>
   </html>`
-  fs.writeFile('查重结果.html', html, error => {
+  fs.writeFile(`${title}.html`, html, error => {
     if (error) {
       console.log(error);
     }
