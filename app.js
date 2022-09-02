@@ -169,8 +169,11 @@ const checkXiaozhu = (index) => {
         }
         console.log('-----------------------------------------------------------------------------------')
         console.log(' ')
-        nextXiaozu()
       }
+      nextXiaozu()
+    } else {
+      errorList.push(item);
+      nextXiaozu()
     }
   }).catch(error => {
     console.log('error ===================>', error)
