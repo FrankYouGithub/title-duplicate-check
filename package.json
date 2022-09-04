@@ -14,6 +14,7 @@
   "dependencies": {
     "axios": "^0.27.2",
     "cheerio": "^1.0.0-rc.12",
+    "node-xlsx": "^0.21.0",
     "request": "^2.88.2"
   }
 }
