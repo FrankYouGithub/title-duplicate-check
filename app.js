@@ -252,7 +252,7 @@ const loginXiaozhu = () => {
     })
   })
 }
-let page = 2;
+let page = 1;
 const copyrightList = [];
 const getCopyRight = () => {
   axios.post('https://mp.xiaozhuyouban.com/copyright/resource', {
@@ -290,7 +290,7 @@ const getCopyRight = () => {
       } else {
         console.log('===========================版权库加载完成===============================')
         console.log('总条数：', copyrightList.length)
-        outputExcel();
+        outputExcel('copyright-list.xlsx');
       }
     } else {
       getCopyRight();
@@ -300,9 +300,45 @@ const getCopyRight = () => {
     getCopyRight();
   })
 }
+const getRemovedCopyRight = () => {
+  axios.post('https://mp.xiaozhuyouban.com/resourcelist', {
+    page,
+  }, {
+    headers: {
+      'accept': '*/*',
+      'content-type': 'multipart/form-data',
+      'host': 'mp.xiaozhuyouban.com',
+      "origin": "https://mp.xiaozhuyouban.com",
+      "referer": "https://mp.xiaozhuyouban.com/resourcelist",
+      'Cookie': cookie,
+      'X-CSRF-TOKEN': token,
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36",
+      "x-requested-with": "XMLHttpRequest"
+    }
+  }).then(res => {
+    if (res.status === 200 && res.data.code == 0) {
+      const { resource = [] } = res.data.data
+      copyrightList.push(...resource)
+      console.log(`已加载 ${page} 页，总计：${copyrightList.length} 条`)
+      if (resource.length === 15) {
+        page++;
+        getRemovedCopyRight();
+      } else {
+        console.log('===========================已下架版权库加载完成===============================')
+        console.log('总条数：', copyrightList.length)
+        outputExcel(`removed-copyright-list.xlsx`);
+      }
+    } else {
+      getRemovedCopyRight();
+    }
+  }).catch(error => {
+    console.log(error)
+    getRemovedCopyRight();
+  })
+}
 
-function outputExcel() {
-  const excelList = copyrightList.map(item => [item.title, item.category, item.level, item.genre]);
+function outputExcel(fileName) {
+  const excelList = copyrightList.map(item => [item.title || item.subject, item.category || '', item.level || '', item.genre || '']);
   let buffer = nodeXlsx.build([
     {
       name: 'sheet1',
@@ -310,7 +346,7 @@ function outputExcel() {
     }
   ]);
   console.log('表格导出中。。。。。。。')
-  fs.writeFileSync(path.join(__dirname, 'copyright-list.xlsx'), buffer, { 'flag': 'w' });
+  fs.writeFileSync(path.join(__dirname, fileName), buffer, { 'flag': 'w' });
   console.log('表格导出完成')
 }
 
@@ -321,7 +357,13 @@ const getXiaozhuCopyright = async () => {
   cookie = ck;
   getCopyRight();
 }
-
+const getXiaozhuRemovedCopyright = async () => {
+  const tk = await getCsrfToken();
+  token = tk
+  const ck = await loginXiaozhu();
+  cookie = ck;
+  getRemovedCopyRight();
+}
 switch (mode) {
   case 'bing':
     console.log('开始通过bing查重......')
@@ -334,6 +376,10 @@ switch (mode) {
   case 'copyright':
     console.log('开始获取小猪版权......')
     getXiaozhuCopyright();
+    break
+  case 'removed':
+    console.log('开始获取小猪已下架版权......')
+    getXiaozhuRemovedCopyright();
     break
   default:
     printHelp()
