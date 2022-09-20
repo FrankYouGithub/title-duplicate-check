@@ -14,9 +14,9 @@ const pwd_ = path.resolve(pwd, '..');  // 当前执行程序的路径的上一�
 const mode = process.argv[2]; // 命令 tit_check
 const targetPath = process.argv[3] || path.join(pwd_, `${currentDir}_`); // 目标存放目录(用户数据 或 默认当前执行程序的路径的上一级路径+当前文件夹名+_)
 
-const excel = nodeXlsx.parse(path.join(__dirname, 'copyright-list.xlsx'))	//读取excel表格
+const excel = nodeXlsx.parse(path.join(__dirname, 'hunjian.xlsx'))	//读取excel表格
 const playTitle = excel[0].data.map(item => item[0]) // 需要查重的所有剧名
-console.log(playTitle)
+// console.log(playTitle)
 
 if (!mode) {   // 没有输入命令 return
   printHelp()
@@ -190,6 +190,120 @@ const checkXiaozhu = (index) => {
     nextXiaozu()
   })
 }
+
+// 模拟请求
+function request(title) {
+  console.log(`正在查询-------    ${title}`)
+  const wz = `https://app.xiaozhuyouban.com/video?signature=ZTRjN2FhMWNmYmNiZTU5YjQ1NGUzNmIzN2I4MTc0NjQ2NTNlMDhhYWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NjIwMjY0NzU3OTA==&timestamp=${new Date().getTime()}&channel=android-2 HTTP/1.1`; //网址
+  return new Promise((resolve, reject) => {
+    axios.post(wz, {
+      keyword: title,
+      page: 1,
+      device_code: '653e08aac4410285a6e762f660667fad'
+    }, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }).then(res => {
+      if (res.status === 200) {
+        const list = res.data.data;
+        if (list.length) {
+          const similarList = [];
+          list.forEach(val => {
+            const similarVal = similar(title, val.title);
+            if (similarVal > 60) {
+              similarList.push({
+                similarTitle: val.title,
+                svalue: similarVal,
+                slink: val.url
+              })
+            }
+          })
+          if (similarList.length) {
+            resolve(similarList)
+          }
+        } else {
+          resolve([])
+        }
+      } else {
+        resolve([])
+      }
+    }).catch(error => {
+      resolve([])
+    })
+  });
+}
+async function multiRequest(titles, maxNum) {
+  let data = titles.map((title, index) => ({ index, title }))
+  let result = [] // 存放结果的数组
+  // 巧用Array.from, length是开辟的数组长度，这个可以控制最大的并发数量。后面回调方法用于存放异步请求的函数
+  let promises = Array.from({ length: Math.min(maxNum, data.length) }, () => getChain(data, result))
+  // 利用Promise.all并发执行异步函数
+  await Promise.all(promises)
+  // 通过函数参数接收最终的一个结果
+  return result
+}
+
+async function getChain(data, res = []) {
+  // 利用队列的思想，一个个pop出来执行，只要titles还有，就继续执行
+  while (data.length) {
+    let one = data.pop()
+    try {
+      let urlRes = await request(one.title)
+      // 结果按照索引顺序存储
+      res[one.index] = urlRes
+    }
+    catch (e) {
+      res[one.index] = e
+    }
+  }
+}
+// 小猪 查重相关
+const nextHunjian = () => {
+  if (count < titleList.length - 1) {
+    count++
+    checkhunjian(count)
+  } else {
+    if (errorList.length) {
+      console.log('错误列表：', errorList)
+      titleList = errorList;
+      errorList = [];
+      count = 0;
+      checkXiaozhu(count)
+    } else {
+      outputHtml(results, '小猪APP查重结果')
+    }
+  }
+}
+function checkhunjian(index) {
+  const item = titleList[index];
+  const title = item.title;
+  const [name, text] = title.split('：');
+  const titles = [];
+  if (playTitle.indexOf(name) == -1) {
+    titles.push(title)
+  }
+  playTitle.map(item => {
+    titles.push(`${item}：${text}`)
+  })
+  titles.push(text)
+  multiRequest(titles, 10).then(finalRes => {
+    let similarList = [];
+    finalRes.map(vals => {
+      if (vals && vals.length) {
+        similarList = similarList.concat(vals)
+      }
+    })
+    if (similarList.length) {
+      results.push({
+        ...item,
+        similarList: similarList
+      })
+    }
+    nextHunjian();
+  })
+}
+
 
 let cookie = ''
 let token = ''
@@ -380,6 +494,10 @@ switch (mode) {
   case 'removed':
     console.log('开始获取小猪已下架版权......')
     getXiaozhuRemovedCopyright();
+    break
+  case 'hunjian':
+    console.log('开始通过小猪APP搜索查重混剪视频.......')
+    checkhunjian(count)
     break
   default:
     printHelp()
