@@ -143,18 +143,20 @@ const nextXiaozu = () => {
 const checkXiaozhu = (index) => {
   const item = titleList[index];
   const text = item.title;
-  const wz = `https://app.xiaozhuyouban.com/video?signature=ZTRjN2FhMWNmYmNiZTU5YjQ1NGUzNmIzN2I4MTc0NjQ2NTNlMDhhYWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NjIwMjY0NzU3OTA==&timestamp=${new Date().getTime()}&channel=android-2 HTTP/1.1`; //网址
   console.log(`-------------- 正在比对第 ${index + 1} / ${titleList.length} 条：${text} 【比对结果】--------------`)
-
-  axios.post(wz, {
+  const data = {
     keyword: text,
     page: 1,
     device_code: '653e08aac4410285a6e762f660667fad'
-  }, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  }).then(res => {
+  };
+  var options = {
+    method: 'POST',
+    url: 'https://app.xiaozhuyouban.com/video?signature=NjUzZTA4YTY5MDM3MzNjZjg0M2UyMTAxMmNlZWVjNmM3OTcwOTc4YWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NjQyODkxMzk4Nzc==&timestamp=1664289139877&channel=android-2',
+    headers: { 'Content-Type': 'multipart/form-data' },
+    data: data
+  };
+
+  axios.request(options).then(res => {
     if (res.status === 200) {
       const list = res.data.data;
       if (list.length) {
@@ -194,17 +196,20 @@ const checkXiaozhu = (index) => {
 // 模拟请求
 function request(title) {
   console.log(`正在查询-------    ${title}`)
-  const wz = `https://app.xiaozhuyouban.com/video?signature=ZTRjN2FhMWNmYmNiZTU5YjQ1NGUzNmIzN2I4MTc0NjQ2NTNlMDhhYWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NjIwMjY0NzU3OTA==&timestamp=${new Date().getTime()}&channel=android-2 HTTP/1.1`; //网址
   return new Promise((resolve, reject) => {
-    axios.post(wz, {
+    const data = {
       keyword: title,
       page: 1,
       device_code: '653e08aac4410285a6e762f660667fad'
-    }, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    }).then(res => {
+    };
+    var options = {
+      method: 'POST',
+      url: 'https://app.xiaozhuyouban.com/video?signature=NjUzZTA4YTY5MDM3MzNjZjg0M2UyMTAxMmNlZWVjNmM3OTcwOTc4YWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NjQyODkxMzk4Nzc==&timestamp=1664289139877&channel=android-2',
+      headers: { 'Content-Type': 'multipart/form-data' },
+      data: data
+    };
+
+    axios.request(options).then(res => {
       if (res.status === 200) {
         const list = res.data.data;
         if (list.length) {
@@ -246,15 +251,16 @@ async function multiRequest(titles, maxNum) {
 
 async function getChain(data, res = []) {
   // 利用队列的思想，一个个pop出来执行，只要titles还有，就继续执行
-  while (data.length) {
+  while (data.length && res.length == 0) {
     let one = data.pop()
     try {
       let urlRes = await request(one.title)
-      // 结果按照索引顺序存储
-      res[one.index] = urlRes
+      if (urlRes.length) {
+        res.push(urlRes)
+      }
     }
     catch (e) {
-      res[one.index] = e
+      // res[one.index] = e
     }
   }
 }
