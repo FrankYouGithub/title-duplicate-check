@@ -187,7 +187,6 @@ const checkXiaozhu = (index) => {
       nextXiaozu()
     }
   }).catch(error => {
-    console.log('error ===================>', error)
     errorList.push(item);
     nextXiaozu()
   })
@@ -208,7 +207,6 @@ function request(title) {
       headers: { 'Content-Type': 'multipart/form-data' },
       data: data
     };
-
     axios.request(options).then(res => {
       if (res.status === 200) {
         const list = res.data.data;
@@ -216,16 +214,16 @@ function request(title) {
           const similarList = [];
           list.forEach(val => {
             const similarVal = similar(title, val.title);
-            if (similarVal > 60) {
-              similarList.push({
-                similarTitle: val.title,
-                svalue: similarVal,
-                slink: val.url
-              })
-            }
+            similarList.push({
+              similarTitle: val.title,
+              svalue: similarVal,
+              slink: val.url
+            })
           })
           if (similarList.length) {
             resolve(similarList)
+          } else {
+            resolve([])
           }
         } else {
           resolve([])
@@ -244,14 +242,14 @@ async function multiRequest(titles, maxNum) {
   // 巧用Array.from, length是开辟的数组长度，这个可以控制最大的并发数量。后面回调方法用于存放异步请求的函数
   let promises = Array.from({ length: Math.min(maxNum, data.length) }, () => getChain(data, result))
   // 利用Promise.all并发执行异步函数
-  await Promise.all(promises)
+  const res = await Promise.all(promises).then(r => console.log('r', r), err => console.log('err', err))
   // 通过函数参数接收最终的一个结果
   return result
 }
 
 async function getChain(data, res = []) {
   // 利用队列的思想，一个个pop出来执行，只要titles还有，就继续执行
-  while (data.length && res.length == 0) {
+  while (res.length == 0 && data.length) {
     let one = data.pop()
     try {
       let urlRes = await request(one.title)
@@ -260,6 +258,7 @@ async function getChain(data, res = []) {
       }
     }
     catch (e) {
+      console.log('err0', e)
       // res[one.index] = e
     }
   }
@@ -277,6 +276,7 @@ const nextHunjian = () => {
       count = 0;
       checkXiaozhu(count)
     } else {
+      console.log('正在导出文件。。。。。。。。。')
       outputHtml(results, '小猪APP查重结果')
     }
   }
@@ -293,7 +293,9 @@ function checkhunjian(index) {
     titles.push(`${item}：${text}`)
   })
   titles.push(text)
+  console.log(`--------------------------------------------------正在查询 ${index + 1} / ${titleList.length}-----------------------------------------------`)
   multiRequest(titles, 10).then(finalRes => {
+    console.log('finalRes--------->', finalRes)
     let similarList = [];
     finalRes.map(vals => {
       if (vals && vals.length) {
