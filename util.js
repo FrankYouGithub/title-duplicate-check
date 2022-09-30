@@ -1,12 +1,15 @@
 /*
  * @Author       : frank
  * @Date         : 2022-08-28 21:03:36
- * @LastEditTime : 2022-09-04 16:52:36
+ * @LastEditTime : 2022-09-30 11:40:18
  * @LastEditors  : frank
  * @Description  : In User Settings Edit
  */
 const fs = require('fs');
 const path = require('path');
+const pwd = process.cwd(); // 当前执行程序的路径 同 path.resolve('./')
+const currentDir = pwd.substr(pwd.lastIndexOf('/') + 1);  // 当前执行程序所在的文件名
+var open = require('child_process');
 
 /**
  * 判断文件/文件夹是否存在
@@ -135,6 +138,8 @@ const outputHtml = (list, title = '查重结果') => {
   fs.writeFile(`${title}.html`, html, error => {
     if (error) {
       console.log(error);
+    } else {
+      open.exec(`start ${currentDir}/${title}.html`)
     }
   });
 }

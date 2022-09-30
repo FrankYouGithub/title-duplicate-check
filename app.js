@@ -136,6 +136,7 @@ const nextXiaozu = () => {
       count = 0;
       checkXiaozhu(count)
     } else {
+      console.log('导出文件...........')
       outputHtml(results, '小猪APP查重结果')
     }
   }
@@ -159,6 +160,7 @@ const checkXiaozhu = (index) => {
   axios.request(options).then(res => {
     if (res.status === 200) {
       const list = res.data.data;
+      console.log('请求结果：', list)
       if (list.length) {
         const similarList = [];
         list.forEach(val => {
@@ -183,10 +185,12 @@ const checkXiaozhu = (index) => {
       }
       nextXiaozu()
     } else {
+      console.log('请求错误：请稍后重试，或联系管理员')
       errorList.push(item);
       nextXiaozu()
     }
   }).catch(error => {
+    console.log('请求错误：请稍后重试，或联系管理员')
     errorList.push(item);
     nextXiaozu()
   })
@@ -210,6 +214,7 @@ function request(title) {
     axios.request(options).then(res => {
       if (res.status === 200) {
         const list = res.data.data;
+        console.log('查询结果：', list)
         if (list.length) {
           const similarList = [];
           list.forEach(val => {
@@ -229,9 +234,11 @@ function request(title) {
           resolve([])
         }
       } else {
+        console.log('查询失败：', res.data.data)
         resolve([])
       }
     }).catch(error => {
+      console.log('查询失败：', error)
       resolve([])
     })
   });
@@ -242,7 +249,7 @@ async function multiRequest(titles, maxNum) {
   // 巧用Array.from, length是开辟的数组长度，这个可以控制最大的并发数量。后面回调方法用于存放异步请求的函数
   let promises = Array.from({ length: Math.min(maxNum, data.length) }, () => getChain(data, result))
   // 利用Promise.all并发执行异步函数
-  const res = await Promise.all(promises).then(r => console.log('r', r), err => console.log('err', err))
+  const res = await Promise.all(promises)
   // 通过函数参数接收最终的一个结果
   return result
 }
