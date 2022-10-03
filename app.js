@@ -301,7 +301,7 @@ function checkhunjian(index) {
   })
   titles.push(text)
   console.log(`--------------------------------------------------正在查询 ${index + 1} / ${titleList.length}-----------------------------------------------`)
-  multiRequest(titles, 10).then(finalRes => {
+  multiRequest(titles, 5).then(finalRes => {
     console.log('finalRes--------->', finalRes)
     let similarList = [];
     finalRes.map(vals => {
