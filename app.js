@@ -291,7 +291,14 @@ const nextHunjian = () => {
 function checkhunjian(index) {
   const item = titleList[index];
   const title = item.title;
-  const [name, text] = title.split('：');
+  let name, text;
+  if (title.indexOf('：') > -1) {
+    [name, text] = title.split('：');
+  } else if (title.indexOf('》') > -1) {
+    [name, text] = title.split('》');
+  } else {
+    text = title;
+  }
   const titles = [];
   if (playTitle.indexOf(name) == -1) {
     titles.push(title)
