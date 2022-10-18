@@ -293,7 +293,8 @@ function checkhunjian(index) {
   const title = item.title;
   let name, text;
   if (title.indexOf('：') > -1) {
-    [name, text] = title.split('：');
+    const lastIndex = title.lastIndexOf('：')
+    [name, text] = title.slice(lastIndex + 1)
   } else if (title.indexOf('》') > -1) {
     [name, text] = title.split('》');
   } else {
