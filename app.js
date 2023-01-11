@@ -152,7 +152,7 @@ const checkXiaozhu = (index) => {
   };
   var options = {
     method: 'POST',
-    url: 'https://app.xiaozhuyouban.com/video?signature=NjUzZTA4YTY5MDM3MzNjZjg0M2UyMTAxMmNlZWVjNmM3OTcwOTc4YWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NjQyODkxMzk4Nzc==&timestamp=1664289139877&channel=android-2',
+    url: 'https://app.xiaozhuyouban.com/video?signature=NGRlOTllYzNkNmI4MDc0NDExMmNiYzVjNzAwMTNhNzY2NTNlMDhhYWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NzM0MjM0NDg2MjA==&timestamp=1673423448620&channel=android-2',
     headers: { 'Content-Type': 'multipart/form-data' },
     data: data
   };
@@ -207,7 +207,7 @@ function request(title) {
     };
     var options = {
       method: 'POST',
-      url: 'https://app.xiaozhuyouban.com/video?signature=NjUzZTA4YTY5MDM3MzNjZjg0M2UyMTAxMmNlZWVjNmM3OTcwOTc4YWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NjQyODkxMzk4Nzc==&timestamp=1664289139877&channel=android-2',
+      url: 'https://app.xiaozhuyouban.com/video?signature=NGRlOTllYzNkNmI4MDc0NDExMmNiYzVjNzAwMTNhNzY2NTNlMDhhYWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NzM0MjM0NDg2MjA==&timestamp=1673423448620&channel=android-2',
       headers: { 'Content-Type': 'multipart/form-data' },
       data: data
     };
