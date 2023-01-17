@@ -17,6 +17,7 @@ const targetPath = process.argv[3] || path.join(pwd_, `${currentDir}_`); // 目�
 const excel = nodeXlsx.parse(path.join(__dirname, 'hunjian.xlsx'))	//读取excel表格
 const playTitle = excel[0].data.map(item => item[0]) // 需要查重的所有剧名
 // console.log(playTitle)
+const times = new Date().getTime();
 
 if (!mode) {   // 没有输入命令 return
   printHelp()
@@ -152,7 +153,7 @@ const checkXiaozhu = (index) => {
   };
   var options = {
     method: 'POST',
-    url: 'https://app.xiaozhuyouban.com/video?signature=NGRlOTllYzNkNmI4MDc0NDExMmNiYzVjNzAwMTNhNzY2NTNlMDhhYWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NzM0MjM0NDg2MjA==&timestamp=1673423448620&channel=android-2',
+    url: 'https://app.xiaozhuyouban.com/video?signature=NjUzZTA4YWE1YjdiNGM5Y2NkNzcyZTM5YjFjNDM2ZTZhZTFiYTYxMGM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NzM5MzIxNDYyMDg==&timestamp=1673932146208&channel=android-2',
     headers: { 'Content-Type': 'multipart/form-data' },
     data: data
   };
@@ -207,7 +208,7 @@ function request(title) {
     };
     var options = {
       method: 'POST',
-      url: 'https://app.xiaozhuyouban.com/video?signature=NGRlOTllYzNkNmI4MDc0NDExMmNiYzVjNzAwMTNhNzY2NTNlMDhhYWM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NzM0MjM0NDg2MjA==&timestamp=1673423448620&channel=android-2',
+      url: 'https://app.xiaozhuyouban.com/video?signature=NjUzZTA4YWE1YjdiNGM5Y2NkNzcyZTM5YjFjNDM2ZTZhZTFiYTYxMGM0NDEwMjg1YTZlNzYyZjY2MDY2N2ZhZDE2NzM5MzIxNDYyMDg==&timestamp=1673932146208&channel=android-2',
       headers: { 'Content-Type': 'multipart/form-data' },
       data: data
     };
@@ -310,7 +311,7 @@ function checkhunjian(index) {
   })
   titles.push(text)
   console.log(`--------------------------------------------------正在查询 ${index + 1} / ${titleList.length}-----------------------------------------------`)
-  multiRequest(titles, 5).then(finalRes => {
+  multiRequest(titles, 2).then(finalRes => {
     console.log('finalRes--------->', finalRes)
     let similarList = [];
     finalRes.map(vals => {
