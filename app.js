@@ -83,7 +83,12 @@ const next = () => {
 }
 const checkBing = (index) => {
   const item = titleList[index];
-  const text = item.title;
+  let name, text;
+  if (item.title.indexOf('》') > -1) {
+    [name, text] = item.title.split('》');
+  } else {
+    text = item.title;
+  }
   const wz = `https://cn.bing.com/search?q=${text}&PC=U316&FORM=CHROMN`; //网址
   let strHtml = "";
   console.log(`-------------- 正在比对第 ${index + 1} / ${titleList.length} 条：${text} 【比对结果】--------------`)
