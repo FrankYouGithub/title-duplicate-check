@@ -99,7 +99,7 @@ const checkBing = (index) => {
     res.on("end", function () {
       const $ = cheerio.load(strHtml);
       const similarList = [];
-
+      console.log($("#b_content #b_results li.b_algo").html())
       $("#b_results li.b_algo .b_title").each((iten, i) => {
         const str = $(i).text().split(' ...')[0];
         const similarVal = similar(text, str);
